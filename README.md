@@ -1,0 +1,1 @@
+# metacontroller-operator-loki-rule-group
