@@ -19,7 +19,7 @@ def create_or_update_alerting_rule_group(
         data=yaml_rule_group_definition,
         headers=LOKI_POST_HEADERS
     )  
-    return response.text
+    return response
 
 def delete_alerting_rule_group(
     rule_namespace,
@@ -28,7 +28,7 @@ def delete_alerting_rule_group(
     response = requests.delete(
         f'{LOKI_ENDPOINT}/loki/api/v1/rules/{rule_namespace}/{rule_name}'
     )
-    return response.json()
+    return response
 
 
 def get_alerting_rules():
@@ -69,7 +69,7 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
                 rule_namespace=rule_group_namespace,
                 yaml_rule_group_definition=rule_group
             )
-            if response.status_code == 200:
+            if response.ok is True:
                 synced = True
             else:
                 synced = False
