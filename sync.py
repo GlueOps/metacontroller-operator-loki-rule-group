@@ -6,7 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 LOKI_GATEWAY_URL = 'http://loki-gateway.glueops-core-loki.svc.cluster.local'
 LOKI_GATEWAY_PORT = '3100'
-LOKI_ENDPOINT = f'http://{LOKI_GATEWAY_URL}:{LOKI_GATEWAY_PORT}'
+LOKI_ENDPOINT = f'{LOKI_GATEWAY_URL}:{LOKI_GATEWAY_PORT}'
 LOKI_POST_HEADERS = {"Content-Type": "application/yaml"}
 
 
