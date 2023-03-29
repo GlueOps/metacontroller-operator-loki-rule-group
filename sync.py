@@ -61,8 +61,13 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
                 rule_name=rule_group_namespace,
                 rule_namespace=rule_group_namespace
             )
+            response_data = {
+                "finalized": response.ok
+            }
             self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
             self.end_headers()
+            self.wfile.write(json.dumps(response_data).encode('utf-8'))
         else:
             # Sync the object with the external API
             response = create_or_update_alerting_rule_group(
