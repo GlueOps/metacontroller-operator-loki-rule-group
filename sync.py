@@ -36,7 +36,8 @@ def get_alerting_rules():
         f'{LOKI_ENDPOINT}/loki/api/v1/rules'
     )
     return yaml.safe_load(response.text)
-    
+
+# Not used, since getting state from the API isn't needed for finalizers
 def get_alerting_rules_in_namespace(rule_namespace):
     response = requests.get(
         f'{LOKI_ENDPOINT}/loki/api/v1/rules/{rule_namespace}'
