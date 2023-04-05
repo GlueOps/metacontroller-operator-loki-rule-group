@@ -1,0 +1,21 @@
+apiVersion: metacontroller.k8s.io/v1alpha1
+kind: CompositeController
+metadata:
+  name: loki-alert-rule-group-controller
+spec:
+  generateSelector: true
+  parentResource:
+    apiVersion: metacontroller.glueops.dev/v1alpha1
+    resource: lokialertrulegroups
+  childResources:
+    - apiVersion: v1
+      resource: configmaps
+      updateStrategy:
+        method: InPlace
+  hooks:
+    sync:
+      webhook:
+        url: http://loki-alert-rule-group-controller.controller-loki-rule-groups
+    finalize:
+      webhook:
+        url: http://loki-alert-rule-group-controller.controller-loki-rule-groups/finalize
