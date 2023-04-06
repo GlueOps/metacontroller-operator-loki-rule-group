@@ -1,10 +1,11 @@
 import json
+import os
 import requests
 import yaml
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
-LOKI_GATEWAY_URL = 'http://loki-gateway.glueops-core-loki.svc.cluster.local'
+LOKI_GATEWAY_URL = os.environ['LOKI_GATEWAY_URL']
 LOKI_POST_HEADERS = {"Content-Type": "application/yaml"}
 
 
