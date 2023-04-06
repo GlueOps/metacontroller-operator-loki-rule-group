@@ -5,9 +5,6 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
 LOKI_GATEWAY_URL = 'http://loki-gateway.glueops-core-loki.svc.cluster.local'
-# LOKI_GATEWAY_PORT = '80'
-# LOKI_ENDPOINT = f'{LOKI_GATEWAY_URL}:{LOKI_GATEWAY_PORT}'
-LOKI_ENDPOINT = f'{LOKI_GATEWAY_URL}'
 LOKI_POST_HEADERS = {"Content-Type": "application/yaml"}
 
 
@@ -16,7 +13,7 @@ def create_or_update_alerting_rule_group(
     yaml_rule_group_definition
 ):
     response = requests.post(
-        f'{LOKI_ENDPOINT}/loki/api/v1/rules/{rule_namespace}',
+        f'{LOKI_GATEWAY_URL}/loki/api/v1/rules/{rule_namespace}',
         data=yaml_rule_group_definition,
         headers=LOKI_POST_HEADERS
     )  
@@ -27,21 +24,21 @@ def delete_alerting_rule_group(
     rule_name,
 ):
     response = requests.delete(
-        f'{LOKI_ENDPOINT}/loki/api/v1/rules/{rule_namespace}/{rule_name}'
+        f'{LOKI_GATEWAY_URL}/loki/api/v1/rules/{rule_namespace}/{rule_name}'
     )
     return response
 
 
 def get_alerting_rules():
     response = requests.get(
-        f'{LOKI_ENDPOINT}/loki/api/v1/rules'
+        f'{LOKI_GATEWAY_URL}/loki/api/v1/rules'
     )
     return yaml.safe_load(response.text)
 
 # Not used, since getting state from the API isn't needed for finalizers
 def get_alerting_rules_in_namespace(rule_namespace):
     response = requests.get(
-        f'{LOKI_ENDPOINT}/loki/api/v1/rules/{rule_namespace}'
+        f'{LOKI_GATEWAY_URL}/loki/api/v1/rules/{rule_namespace}'
     )
     return yaml.safe_load(response.text)[rule_namespace][0]
 
