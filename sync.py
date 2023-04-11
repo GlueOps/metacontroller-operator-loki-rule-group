@@ -35,22 +35,36 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
 
         parent = request_data['parent']
         rule_group = yaml.dump(parent.get('spec', {}))
-        rule_group_namespace = request_data['parent']['spec']['name']
-        
+        try:
+            rule_group_namespace = request_data['parent']['spec']['name']
+        except Exception:
+            status = 'Degraded'
+            logger.exception(f'failed to parse request: {request_data}')
 
         if self.path.endswith('/finalize'):
             # Handle the finalize hook
-            response = delete_alerting_rule_group(
-                rule_name=rule_group_namespace,
-                rule_namespace=rule_group_namespace
-            )
-            response_data = {
-                "finalized": response.ok
-            }
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps(response_data).encode('utf-8'))
+            try:
+                response = delete_alerting_rule_group(
+                    rule_name=rule_group_namespace,
+                    rule_namespace=rule_group_namespace
+                )
+                response_data = {
+                    "finalized": response.ok
+                }
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(response_data).encode('utf-8'))
+            except Exception:
+                response_data = {
+                    "finalized": False
+                }
+                self.send_response(500)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(response_data).encode('utf-8'))
+                logger.exception(f'failed to delete rule group: {rule_group_namespace}/{rule_group_namespace}')
+
         else:
             # Sync the object with the external API
             try:
@@ -64,6 +78,7 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
                     status = 'Progressing'
             except Exception:
                 status = "Degraded"
+                logger.exception(f'failed to create rule group: {rule_group}')
 
 
             # Prepare the response for Metacontroller
