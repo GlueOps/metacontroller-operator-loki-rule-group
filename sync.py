@@ -90,12 +90,12 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
                 response_data = {
                     "finalized": True
                 }
-                self.send_response(500)
+                self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps(response_data).encode('utf-8'))
-                logger.exception(
-                    f'failed to delete rule group from request: {request_data}'
+                logger.warning(
+                    f'failed to delete rule group from request, did it exist?: {request_data}'
                 )
 
         else:
@@ -105,7 +105,6 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
                     rule_namespace=rule_group_namespace,
                     yaml_rule_group_definition=rule_group
                 )
-                # if response.ok is True:
                 if rule_group == get_alerting_rules_in_namespace(
                     rule_namespace=rule_group_namespace
                 ):
