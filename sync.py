@@ -46,7 +46,8 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
             try:
                 response = delete_alerting_rule_group(
                     rule_name=rule_group_namespace,
-                    rule_namespace=rule_group_namespace
+                    rule_namespace=rule_group_namespace,
+                    LOkI_GATEWAY_URL=LOKI_GATEWAY_URL
                 )
                 response_data = {
                     "finalized": response.ok
@@ -70,7 +71,8 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
             try:
                 response = create_or_update_alerting_rule_group(
                     rule_namespace=rule_group_namespace,
-                    yaml_rule_group_definition=rule_group
+                    yaml_rule_group_definition=rule_group,
+                    LOKI_GATEWAY_URL=LOKI_GATEWAY_URL
                 )
                 if response.ok is True:
                     status = 'Healthy'
