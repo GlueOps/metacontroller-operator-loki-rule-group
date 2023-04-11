@@ -94,7 +94,7 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps(response_data).encode('utf-8'))
-                logger.exception(f'failed to delete rule group: {rule_group_namespace}/{rule_group_namespace}')
+                logger.exception(f'failed to delete rule group from request: {request_data}')
 
         else:
             # Sync the object with the external API
