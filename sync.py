@@ -2,14 +2,12 @@ import json
 import logging
 import os
 import yaml
+import requests
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from src.json_log_formatter import JsonFormatter
 
-from src.lib import(
-    create_or_update_alerting_rule_group,
-    delete_alerting_rule_group,
-)
 
 # configure logging
 json_formatter = JsonFormatter()
@@ -24,6 +22,39 @@ logger.addHandler(handler)
 # configure loki endpoint values
 LOKI_GATEWAY_URL = os.environ['LOKI_GATEWAY_URL']
 LOKI_POST_HEADERS = {"Content-Type": "application/yaml"}
+
+def create_or_update_alerting_rule_group(
+    rule_namespace,
+    yaml_rule_group_definition,
+):
+    response = requests.post(
+        f'{LOKI_GATEWAY_URL}/loki/api/v1/rules/{rule_namespace}',
+        data=yaml_rule_group_definition,
+        headers=LOKI_POST_HEADERS
+    )  
+    return response
+
+def delete_alerting_rule_group(
+    rule_namespace,
+    rule_name,
+):
+    response = requests.delete(
+        f'{LOKI_GATEWAY_URL}/loki/api/v1/rules/{rule_namespace}/{rule_name}'
+    )
+    return response
+
+def get_alerting_rules():
+    response = requests.get(
+        f'{LOKI_GATEWAY_URL}/loki/api/v1/rules'
+    )
+    return yaml.safe_load(response.text)
+
+# Not used, since getting state from the API isn't needed for finalizers
+def get_alerting_rules_in_namespace(rule_namespace,):
+    response = requests.get(
+        f'{LOKI_GATEWAY_URL}/loki/api/v1/rules/{rule_namespace}'
+    )
+    return yaml.safe_load(response.text)[rule_namespace][0]
 
 
 
@@ -47,7 +78,6 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
                 response = delete_alerting_rule_group(
                     rule_name=rule_group_namespace,
                     rule_namespace=rule_group_namespace,
-                    LOkI_GATEWAY_URL=LOKI_GATEWAY_URL
                 )
                 response_data = {
                     "finalized": response.ok
@@ -71,8 +101,7 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
             try:
                 response = create_or_update_alerting_rule_group(
                     rule_namespace=rule_group_namespace,
-                    yaml_rule_group_definition=rule_group,
-                    LOKI_GATEWAY_URL=LOKI_GATEWAY_URL
+                    yaml_rule_group_definition=rule_group
                 )
                 if response.ok is True:
                     status = 'Healthy'
