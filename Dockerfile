@@ -6,6 +6,7 @@ WORKDIR /app
 
 COPY ./requirements.txt .
 COPY ./sync.py .
+COPY ./src ./src
 
 RUN pip install -r requirements.txt
 
