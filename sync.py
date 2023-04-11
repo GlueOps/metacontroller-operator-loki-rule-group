@@ -105,6 +105,11 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
                     rule_namespace=rule_group_namespace,
                     yaml_rule_group_definition=rule_group
                 )
+                test = get_alerting_rules_in_namespace(
+                    rule_namespace=rule_group_namespace
+                )
+                logger.info(f'rule_group: {rule_group}')
+                logger.info(f'fnc response: {test}')
                 if rule_group == get_alerting_rules_in_namespace(
                     rule_namespace=rule_group_namespace
                 ):
