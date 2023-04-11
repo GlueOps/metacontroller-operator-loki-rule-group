@@ -75,14 +75,16 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
                 yaml_rule_group_definition=rule_group
             )
             if response.ok is True:
-                synced = True
+                status = 'Healthy'
             else:
-                synced = False
+                status = 'Progressing'
 
             # Prepare the response for Metacontroller
             response_data = {
                 'status': {
-                    'synced': synced,
+                    'health': {
+                        'status': status 
+                    },
                 },
             }
 
