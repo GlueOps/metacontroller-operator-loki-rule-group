@@ -1,17 +1,31 @@
 import json
+import logging
 import os
-import requests
 import yaml
+import requests
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+from src.json_log_formatter import JsonFormatter
 
+
+# configure logging
+json_formatter = JsonFormatter()
+
+handler = logging.StreamHandler()
+handler.setFormatter(json_formatter)
+
+logger = logging.getLogger('LOKI_RULE_GROUP_CONTROLLER')
+logger.setLevel(logging.INFO)
+logger.addHandler(handler)
+
+# configure loki endpoint values
 LOKI_GATEWAY_URL = os.environ['LOKI_GATEWAY_URL']
 LOKI_POST_HEADERS = {"Content-Type": "application/yaml"}
 
-
 def create_or_update_alerting_rule_group(
     rule_namespace,
-    yaml_rule_group_definition
+    yaml_rule_group_definition,
 ):
     response = requests.post(
         f'{LOKI_GATEWAY_URL}/loki/api/v1/rules/{rule_namespace}',
@@ -29,7 +43,6 @@ def delete_alerting_rule_group(
     )
     return response
 
-
 def get_alerting_rules():
     response = requests.get(
         f'{LOKI_GATEWAY_URL}/loki/api/v1/rules'
@@ -37,11 +50,12 @@ def get_alerting_rules():
     return yaml.safe_load(response.text)
 
 # Not used, since getting state from the API isn't needed for finalizers
-def get_alerting_rules_in_namespace(rule_namespace):
+def get_alerting_rules_in_namespace(rule_namespace,):
     response = requests.get(
         f'{LOKI_GATEWAY_URL}/loki/api/v1/rules/{rule_namespace}'
     )
     return yaml.safe_load(response.text)[rule_namespace][0]
+
 
 
 class LokiRuleGroupHandler(BaseHTTPRequestHandler):
@@ -52,37 +66,63 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
 
         parent = request_data['parent']
         rule_group = yaml.dump(parent.get('spec', {}))
-        rule_group_namespace = request_data['parent']['spec']['name']
-        
+        try:
+            rule_group_namespace = request_data['parent']['spec']['name']
+        except Exception:
+            status = 'Degraded'
+            logger.exception(f'failed to parse request: {request_data}')
 
         if self.path.endswith('/finalize'):
             # Handle the finalize hook
-            response = delete_alerting_rule_group(
-                rule_name=rule_group_namespace,
-                rule_namespace=rule_group_namespace
-            )
-            response_data = {
-                "finalized": response.ok
-            }
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps(response_data).encode('utf-8'))
+            try:
+                response = delete_alerting_rule_group(
+                    rule_name=rule_group_namespace,
+                    rule_namespace=rule_group_namespace,
+                )
+                response_data = {
+                    "finalized": response.ok
+                }
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(response_data).encode('utf-8'))
+            except Exception:
+                response_data = {
+                    "finalized": True
+                }
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(response_data).encode('utf-8'))
+                logger.warning(
+                    f'failed to delete rule group from request, did it exist?: {request_data}'
+                )
+
         else:
             # Sync the object with the external API
-            response = create_or_update_alerting_rule_group(
-                rule_namespace=rule_group_namespace,
-                yaml_rule_group_definition=rule_group
-            )
-            if response.ok is True:
-                synced = True
-            else:
-                synced = False
+            try:
+                response = create_or_update_alerting_rule_group(
+                    rule_namespace=rule_group_namespace,
+                    yaml_rule_group_definition=rule_group
+                )
+                # check if rule group was created
+                if yaml.safe_load(rule_group) == get_alerting_rules_in_namespace(
+                    rule_namespace=rule_group_namespace
+                ):
+                    status = 'Healthy'
+                else:
+                    status = 'Progressing'
+            except Exception:
+                status = "Degraded"
+                logger.exception(f'failed to create rule group: {rule_group}')
+
 
             # Prepare the response for Metacontroller
             response_data = {
                 'status': {
-                    'synced': synced,
+                    'health': {
+                        'status': status 
+                    },
                 },
             }
 
