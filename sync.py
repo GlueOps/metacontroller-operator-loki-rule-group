@@ -20,9 +20,7 @@ logger.setLevel(logging.INFO)
 logger.addHandler(handler)
 
 # configure loki endpoint values
-LOKI_BACKEND_URL = os.environ['LOKI_BACKEND_URL']
-LOKI_BACKEND_PORT = os.environ['LOKI_BACKEND_PORT']
-LOKI_BACKEND_ENDPOINT = f'{LOKI_BACKEND_URL}:{LOKI_BACKEND_PORT}'
+LOKI_BACKEND_ENDPOINT = os.environ['LOKI_BACKEND_ENDPOINT']
 LOKI_POST_HEADERS = {"Content-Type": "application/yaml"}
 
 def create_or_update_alerting_rule_group(
