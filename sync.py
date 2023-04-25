@@ -20,7 +20,7 @@ logger.setLevel(logging.INFO)
 logger.addHandler(handler)
 
 # configure loki endpoint values
-LOKI_GATEWAY_URL = os.environ['LOKI_GATEWAY_URL']
+LOKI_API_ENDPOINT = os.environ['LOKI_API_ENDPOINT']
 LOKI_POST_HEADERS = {"Content-Type": "application/yaml"}
 
 def create_or_update_alerting_rule_group(
@@ -28,7 +28,7 @@ def create_or_update_alerting_rule_group(
     yaml_rule_group_definition,
 ):
     response = requests.post(
-        f'{LOKI_GATEWAY_URL}/loki/api/v1/rules/{rule_namespace}',
+        f'{LOKI_API_ENDPOINT}/loki/api/v1/rules/{rule_namespace}',
         data=yaml_rule_group_definition,
         headers=LOKI_POST_HEADERS
     )  
@@ -39,20 +39,20 @@ def delete_alerting_rule_group(
     rule_name,
 ):
     response = requests.delete(
-        f'{LOKI_GATEWAY_URL}/loki/api/v1/rules/{rule_namespace}/{rule_name}'
+        f'{LOKI_API_ENDPOINT}/loki/api/v1/rules/{rule_namespace}/{rule_name}'
     )
     return response
 
 def get_alerting_rules():
     response = requests.get(
-        f'{LOKI_GATEWAY_URL}/loki/api/v1/rules'
+        f'{LOKI_API_ENDPOINT}/loki/api/v1/rules'
     )
     return yaml.safe_load(response.text)
 
 # Not used, since getting state from the API isn't needed for finalizers
 def get_alerting_rules_in_namespace(rule_namespace,):
     response = requests.get(
-        f'{LOKI_GATEWAY_URL}/loki/api/v1/rules/{rule_namespace}'
+        f'{LOKI_API_ENDPOINT}/loki/api/v1/rules/{rule_namespace}'
     )
     return yaml.safe_load(response.text)[rule_namespace][0]
 
