@@ -1,4 +1,4 @@
-FROM python:3.11.3-bullseye
+FROM python:3.11.5-alpine3.18
 
 RUN pip install --upgrade pip
 
