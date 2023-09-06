@@ -10,4 +10,4 @@ COPY ./src ./src
 
 RUN pip install -r requirements.txt
 
-CMD ["python", "/app/sync.py"]
+CMD ["python", "-u", "/app/sync.py"]
