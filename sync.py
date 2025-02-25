@@ -132,3 +132,5 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(response_data).encode('utf-8'))
 
 HTTPServer(("", 80), LokiRuleGroupHandler).serve_forever()
+
+
