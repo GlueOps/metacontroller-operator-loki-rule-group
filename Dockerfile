@@ -10,4 +10,6 @@ COPY ./src ./src
 
 RUN pip install -r requirements.txt
 
-CMD ["python", "/app/sync.py"]
+#CMD ["python", "/app/sync.py"]
+
+CMD ["fastapi", "run", "app/sync.py", "--port", "80"]
