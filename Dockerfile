@@ -8,7 +8,7 @@ COPY ./requirements.txt .
 COPY ./sync.py .
 COPY ./src ./src
 
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /requirements.txt
 
 #CMD ["python", "/app/sync.py"]
 
