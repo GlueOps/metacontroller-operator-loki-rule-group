@@ -3,6 +3,8 @@ import logging
 import os
 import yaml
 import requests
+from pydantic import BaseModel
+from fastapi import FastAPI, Request
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -22,6 +24,11 @@ logger.addHandler(handler)
 # configure loki endpoint values
 LOKI_API_ENDPOINT = os.environ['LOKI_API_ENDPOINT']
 LOKI_POST_HEADERS = {"Content-Type": "application/yaml"}
+
+app = FastAPI()
+
+class StringPayload(BaseModel):
+    text: str
 
 def create_or_update_alerting_rule_group(
     rule_namespace,
@@ -57,24 +64,52 @@ def get_alerting_rules_in_namespace(rule_namespace,):
     return yaml.safe_load(response.text)[rule_namespace][0]
 
 
-
-class LokiRuleGroupHandler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        content_length = int(self.headers['Content-Length'])
-        request_body = self.rfile.read(content_length).decode('utf-8')
-        request_data = json.loads(request_body)
-
-        parent = request_data['parent']
-        rule_group = yaml.dump(parent.get('spec', {}))
-        try:
+@app.get("/sync")
+def post(request_body: StringPayload):
+    request_data = json.loads(request_body)
+    parent = request_data['parent']
+    rule_group = yaml.dump(parent.get('spec', {}))
+    try:
             rule_group_namespace = request_data['parent']['spec']['name']
-        except Exception:
+    except Exception:
             status = 'Degraded'
             logger.exception(f'failed to parse request: {request_data}')
+    try:        
+        response = create_or_update_alerting_rule_group(
+                    rule_namespace=rule_group_namespace,
+                    yaml_rule_group_definition=rule_group
+                )
+                # check if rule group was created
+        if yaml.safe_load(rule_group) == get_alerting_rules_in_namespace(
+                    rule_namespace=rule_group_namespace
+        ):
+                    status = 'Healthy'
+        else:
+                    status = 'Progressing'
+    except Exception:
+                status = "Degraded"
+                logger.exception(f'failed to create rule group: {rule_group}')
+    response_data = {
+                'status': {
+                    'health': {
+                        'status': status 
+                    },
+                },
+            }                      
 
-        if self.path.endswith('/finalize'):
-            # Handle the finalize hook
-            try:
+    return response_data
+
+@app.post("/finalize")
+def finalize(request_body: StringPayload):
+    request_data = json.loads(request_body)
+    parent = request_data['parent']
+    rule_group = yaml.dump(parent.get('spec', {}))
+    try:
+            rule_group_namespace = request_data['parent']['spec']['name']
+    except Exception:
+            status = 'Degraded'
+            logger.exception(f'failed to parse request: {request_data}')
+    try:
                 response = delete_alerting_rule_group(
                     rule_name=rule_group_namespace,
                     rule_namespace=rule_group_namespace,
@@ -82,53 +117,11 @@ class LokiRuleGroupHandler(BaseHTTPRequestHandler):
                 response_data = {
                     "finalized": response.ok
                 }
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps(response_data).encode('utf-8'))
-            except Exception:
+                return {response_data}
+    except Exception:
                 response_data = {
                     "finalized": True
                 }
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps(response_data).encode('utf-8'))
-                logger.warning(
-                    f'failed to delete rule group from request, did it exist?: {request_data}'
-                )
+                return {response_data}    
+    
 
-        else:
-            # Sync the object with the external API
-            try:
-                response = create_or_update_alerting_rule_group(
-                    rule_namespace=rule_group_namespace,
-                    yaml_rule_group_definition=rule_group
-                )
-                # check if rule group was created
-                if yaml.safe_load(rule_group) == get_alerting_rules_in_namespace(
-                    rule_namespace=rule_group_namespace
-                ):
-                    status = 'Healthy'
-                else:
-                    status = 'Progressing'
-            except Exception:
-                status = "Degraded"
-                logger.exception(f'failed to create rule group: {rule_group}')
-
-
-            # Prepare the response for Metacontroller
-            response_data = {
-                'status': {
-                    'health': {
-                        'status': status 
-                    },
-                },
-            }
-
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps(response_data).encode('utf-8'))
-
-HTTPServer(("", 80), LokiRuleGroupHandler).serve_forever()
