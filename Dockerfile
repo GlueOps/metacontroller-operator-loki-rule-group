@@ -9,8 +9,8 @@ COPY ./sync.py .
 COPY ./src ./src
 
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
-RUN pip install fastapi uvicorn
+RUN pip install uvicorn["standard"]
 
 
-
-CMD ["fastapi", "run", "app/sync.py", "--port", "80"]
+CMD ["uvicorn", "sync:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
+#CMD ["uvicorn", "run", "app/sync.py", "--port", "80"]
