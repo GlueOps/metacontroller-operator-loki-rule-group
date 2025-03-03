@@ -64,7 +64,7 @@ def get_alerting_rules_in_namespace(rule_namespace,):
     return yaml.safe_load(response.text)[rule_namespace][0]
 
 
-@app.get("/sync")
+@app.post("/sync")
 def post(request_body: Dict[str, Any]):
     request_data = json.loads(request_body)
     parent = request_data['parent']
@@ -117,11 +117,11 @@ def finalize(request_body: Dict[str, Any]):
                 response_data = {
                     "finalized": response.ok
                 }
-                return {response_data}
+                return response_data
     except Exception:
                 response_data = {
                     "finalized": True
                 }
-                return {response_data}    
+                return response_data  
     
 
