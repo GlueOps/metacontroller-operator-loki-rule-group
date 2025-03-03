@@ -102,8 +102,8 @@ async def post(request: Request):
     return response_data
 
 @app.post("/finalize")
-def finalize(request_body: StringPayload):
-    request_data = json.loads(request_body.text)
+async def finalize(request: Request):
+    request_data = await request.json() 
     parent = request_data['parent']
     rule_group = yaml.dump(parent.get('spec', {}))
     try:
