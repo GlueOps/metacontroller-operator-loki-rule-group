@@ -5,7 +5,7 @@ import yaml
 import requests
 from pydantic import BaseModel
 from fastapi import FastAPI, Request
-
+from typing import Dict, Any
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from src.json_log_formatter import JsonFormatter
@@ -64,8 +64,8 @@ def get_alerting_rules_in_namespace(rule_namespace,):
     return yaml.safe_load(response.text)[rule_namespace][0]
 
 
-@app.post("/sync")
-def post(request_body: StringPayload):
+@app.get("/sync")
+def post(request_body: Dict[str, Any]):
     request_data = json.loads(request_body)
     parent = request_data['parent']
     rule_group = yaml.dump(parent.get('spec', {}))
@@ -100,7 +100,7 @@ def post(request_body: StringPayload):
     return response_data
 
 @app.post("/finalize")
-def finalize(request_body: StringPayload):
+def finalize(request_body: Dict[str, Any]):
     request_data = json.loads(request_body)
     parent = request_data['parent']
     rule_group = yaml.dump(parent.get('spec', {}))
