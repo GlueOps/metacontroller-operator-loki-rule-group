@@ -65,8 +65,8 @@ def get_alerting_rules_in_namespace(rule_namespace,):
 
 
 @app.post("/sync")
-def post(request_body: Dict[str, Any]):
-    request_data = json.loads(request_body)
+def post(request_body:StringPayload):
+    request_data = json.loads(request_body.text)
     parent = request_data['parent']
     rule_group = yaml.dump(parent.get('spec', {}))
     try:
@@ -100,8 +100,8 @@ def post(request_body: Dict[str, Any]):
     return response_data
 
 @app.post("/finalize")
-def finalize(request_body: Dict[str, Any]):
-    request_data = json.loads(request_body)
+def finalize(request_body: StringPayload):
+    request_data = json.loads(request_body.text)
     parent = request_data['parent']
     rule_group = yaml.dump(parent.get('spec', {}))
     try:
