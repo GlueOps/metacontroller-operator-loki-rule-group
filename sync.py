@@ -64,7 +64,7 @@ def get_alerting_rules_in_namespace(rule_namespace,):
     return yaml.safe_load(response.text)[rule_namespace][0]
 
 
-@app.get("/sync")
+@app.post("/sync")
 def post(request_body: StringPayload):
     request_data = json.loads(request_body)
     parent = request_data['parent']
