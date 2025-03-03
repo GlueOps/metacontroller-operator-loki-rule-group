@@ -65,8 +65,10 @@ def get_alerting_rules_in_namespace(rule_namespace,):
 
 
 @app.post("/sync")
-def post(request_body:StringPayload):
-    request_data = json.loads(request_body.text)
+async def post(request: Request):
+    request_data = await request.json()  # Accepts any dynamic JSON payload
+    #request_data = json.loads(request_body)
+    print(request_data)
     parent = request_data['parent']
     rule_group = yaml.dump(parent.get('spec', {}))
     try:
