@@ -8,6 +8,9 @@ COPY ./requirements.txt .
 COPY ./sync.py .
 COPY ./src ./src
 
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
+RUN pip install uvicorn["standard"]
 
-CMD ["python", "/app/sync.py"]
+
+CMD ["uvicorn", "sync:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
+#CMD ["uvicorn", "run", "app/sync.py", "--port", "80"]
