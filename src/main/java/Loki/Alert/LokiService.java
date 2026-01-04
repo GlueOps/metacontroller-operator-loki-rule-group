@@ -22,15 +22,12 @@ public class LokiService {
     @Value("${ORGANIZATION_ID}")
     private String organizationId;
     private final RestTemplate restTemplate = new RestTemplate();
-    
-    // Configure Yaml to behave similarly to default python dump if needed, 
-    // but default should be fine for simple structures.
-    private final Yaml yaml;
 
-    public LokiService() {
+    private Yaml createYaml() {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        this.yaml = new Yaml(options);
+        options.setSplitLines(false);
+        return new Yaml(options);
     }
 
     public ResponseEntity<String> createOrUpdateAlertingRuleGroup(String ruleNamespace, String yamlRuleGroupDefinition) {
@@ -61,7 +58,7 @@ public class LokiService {
             
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<String> response = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, entity, String.class);
-            Map<String, Object> loaded = yaml.load(response.getBody());
+            Map<String, Object> loaded = createYaml().load(response.getBody());
             
             if (loaded != null && loaded.containsKey(ruleNamespace)) {
                  Object namespaceContent = loaded.get(ruleNamespace);
@@ -80,10 +77,10 @@ public class LokiService {
     }
     
     public String dumpYaml(Object data) {
-        return yaml.dump(data);
+        return createYaml().dump(data);
     }
     
     public Object loadYaml(String data) {
-        return yaml.load(data);
+        return createYaml().load(data);
     }
 }
